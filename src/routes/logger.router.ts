@@ -37,6 +37,7 @@ loggerRouter.get('/logger/start', async (req: Request, res: Response) => {
     try {
         createLogger(req, res);
     } catch(error) {
+        SLogger.error(error);
         res.status(500).send((error as Error).message);
     }
 });
@@ -77,6 +78,7 @@ loggerRouter.get('/logs/:loggerId', async (req: Request, res: Response) => {
             res.json(output);
         }
     } catch(error) {
+        SLogger.error(error);
         res.status(500).send((error as Error).message);
     }
 });
@@ -87,6 +89,7 @@ loggerRouter.get('/logger/all', async (req: Request, res: Response) => {
         SLogger.debug(`${result?.length} document(s) returned from ${req.route.path}`);
         res.json(result);
     } catch(error) {
+        SLogger.error(error);
         res.status(500).send((error as Error).message);
     }
 });
@@ -114,12 +117,14 @@ loggerRouter.post('/log', async (req: Request, res: Response) => {
             res.status(404).json({message: `Logger not found with id: ${loggerId}`});
         }
     } catch(error) {
-        //TODO add SLogger logs 
         if (error instanceof z.ZodError) {
+            SLogger.error(error.issues);
             res.status(400).send(error.issues);
         } else if (error instanceof Error){
+            SLogger.error(error.message);
             res.status(500).send(error.message);
         } else {
+            SLogger.error(error);
             res.status(500).send({ message: 'Unhandled Exception'});
         }
     }
@@ -129,6 +134,7 @@ loggerRouter.post('/logger/start', async (req: Request, res: Response) => {
     try {
         createLogger(req, res);
     } catch(error) {
+        SLogger.error(error);
         res.status(500).send((error as Error).message);
     }
 });

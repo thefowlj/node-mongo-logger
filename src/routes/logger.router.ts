@@ -7,6 +7,8 @@ import LogEntry from "../models/logentry";
 import SLogger from "../lib/logger";
 import { Sort, WithId } from "mongodb";
 import { AsyncParser } from "@json2csv/node";
+import LogEntryData from '../validation/logentrySchema';
+import z from 'zod';
 
 
 
@@ -100,8 +102,8 @@ loggerRouter.post('/log', async (req: Request, res: Response) => {
         SLogger.debug(`${n} Logger found with _id:${loggerId}`);
         if (n != undefined && n > 0) {
             logEntry.ts = Date.now();
-            logEntry.logger_id = loggerId
-            // TODO validate log entry schema prior to db insert
+            logEntry.logger_id = loggerId;
+            LogEntryData.parse(logEntry);
             const result = await collections.logs?.insertOne(logEntry);
             SLogger.debug(`A log entry was inserted with id: ${result?.insertedId}`);
             res.status(201).json({
@@ -112,7 +114,14 @@ loggerRouter.post('/log', async (req: Request, res: Response) => {
             res.status(404).json({message: `Logger not found with id: ${loggerId}`});
         }
     } catch(error) {
-        res.status(500).send((error as Error).message);
+        //TODO add SLogger logs 
+        if (error instanceof z.ZodError) {
+            res.status(400).send(error.issues);
+        } else if (error instanceof Error){
+            res.status(500).send(error.message);
+        } else {
+            res.status(500).send({ message: 'Unhandled Exception'});
+        }
     }
 });
 
